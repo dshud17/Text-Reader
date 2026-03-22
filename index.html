@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BookText</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#d4a853">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BookText">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Source+Serif+4:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+
+[data-theme="dark"]{
+  --bg:#0e0c09;--surface:#1a1612;--card:#231f1a;--border:#3a342c;
+  --accent:#d4a853;--accent2:#8b6914;--text:#e8ddd0;
+  --muted:#8a7d6e;--dim:#5a5048;--ok:#6a9e72;--bad:#e07070;
+  /* Soft warm amber — not sharp yellow */
+  --hl-bg:rgba(210,160,60,0.22);--hl-left:3px solid #d4a853;
+}
+[data-theme="light"]{
+  --bg:#f4efe4;--surface:#fffdf7;--card:#ede8dd;--border:#d4c9b0;
+  --accent:#8b5e10;--accent2:#c49830;--text:#2a1f0e;
+  --muted:#6b5a3e;--dim:#a09070;--ok:#3a7a42;--bad:#c03030;
+  --hl-bg:rgba(139,94,16,0.13);--hl-left:3px solid #8b5e10;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:'Source Serif 4',Georgia,serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;transition:background .3s,color .3s;}
+[data-theme="dark"] body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;opacity:.35;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.05'/%3E%3C/svg%3E");}
+
+.wrap{width:100%;max-width:820px;padding:22px 14px 80px;position:relative;z-index:1;}
+
+/* HEADER */
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.logo{font-family:'Playfair Display',serif;font-size:1.85rem;font-weight:700;color:var(--accent);letter-spacing:-.5px;line-height:1;}
+.logo span{color:var(--text);}
+.tagline{margin-top:3px;color:var(--muted);font-size:.78rem;font-weight:300;font-style:italic;}
+.hbtns{display:flex;gap:6px;align-items:center;}
+.ib{background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:7px;width:34px;height:34px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:all .2s;flex-shrink:0;font-family:inherit;}
+.ib:hover{border-color:var(--accent);color:var(--accent);}
+
+/* API KEY */
+.apibar{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent2);border-radius:8px;padding:9px 12px;margin-bottom:11px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.apibar label{font-size:.78rem;color:var(--muted);white-space:nowrap;}
+.apibar input{flex:1;min-width:150px;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:5px 8px;font-size:.82rem;font-family:monospace;}
+.apibar input:focus{outline:none;border-color:var(--accent);}
+.bsk{background:var(--accent);color:#0e0c09;border:none;border-radius:5px;padding:5px 12px;font-size:.79rem;font-weight:700;cursor:pointer;}
+.bsk:hover{background:#e8bc6a;}
+.kok{font-size:.72rem;color:var(--ok);}
+
+/* INSTALL */
+.ibanner{display:none;align-items:center;gap:9px;background:var(--surface);border:1px solid var(--accent2);border-radius:8px;padding:10px 13px;margin-bottom:11px;}
+.ibanner .it{flex:1;font-size:.82rem;color:var(--muted);}
+.ibanner .it b{color:var(--accent);display:block;font-family:'Playfair Display',serif;}
+.binst{background:var(--accent);color:#0e0c09;border:none;border-radius:5px;padding:5px 13px;font-weight:700;font-size:.79rem;cursor:pointer;}
+.bdis{background:none;border:none;color:var(--dim);cursor:pointer;font-size:.95rem;padding:2px 4px;}
+
+/* SAVED BAR */
+.savedbar{display:none;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:8px 12px;margin-bottom:11px;font-size:.82rem;color:var(--muted);}
+.savedbar .si{flex:1;}
+.savedbar .st{color:var(--accent);font-weight:600;font-family:'Playfair Display',serif;font-size:.86rem;}
+.savedbar .ss{font-size:.72rem;color:var(--dim);margin-top:2px;}
+.bres{background:var(--accent);color:#0e0c09;border:none;border-radius:5px;padding:5px 10px;font-size:.77rem;font-weight:700;cursor:pointer;}
+.bclr{background:none;border:1px solid var(--border);color:var(--dim);border-radius:5px;padding:4px 8px;font-size:.73rem;cursor:pointer;transition:all .2s;}
+.bclr:hover{border-color:var(--bad);color:var(--bad);}
+
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px);}to{opacity:1;transform:none;}}
+
+/* UPLOAD */
+.upload{border:2px dashed var(--border);border-radius:11px;padding:36px 18px;text-align:center;cursor:pointer;transition:all .25s;background:var(--surface);position:relative;overflow:hidden;}
+.upload::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,rgba(212,168,83,.04));pointer-events:none;}
+.upload:hover,.upload.dv{border-color:var(--accent);background:var(--card);}
+.uico{font-size:2.2rem;margin-bottom:8px;}
+.utit{font-family:'Playfair Display',serif;font-size:1.08rem;color:var(--text);margin-bottom:4px;}
+.usub{color:var(--muted);font-size:.8rem;font-weight:300;}
+.ufmts{margin-top:10px;display:flex;justify-content:center;gap:7px;}
+.fmt{background:var(--card);border:1px solid var(--border);color:var(--accent);font-size:.68rem;font-family:monospace;padding:2px 8px;border-radius:20px;}
+#fi{display:none;}
+
+/* FILE SEL */
+.fsel{display:none;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:7px 11px;margin-top:8px;}
+.fn{flex:1;color:var(--text);font-size:.83rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.fsz2{color:var(--dim);font-size:.72rem;font-style:italic;}
+.brmv{background:none;border:none;color:var(--dim);cursor:pointer;font-size:.88rem;padding:2px 5px;border-radius:3px;transition:color .2s;}
+.brmv:hover{color:var(--bad);}
+
+/* CONTROLS */
+.crow{display:flex;align-items:center;gap:7px;margin:12px 0;flex-wrap:wrap;}
+.cgrp{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 11px;font-size:.8rem;color:var(--muted);}
+.cgrp input[type=number]{background:var(--card);border:1px solid var(--border);color:var(--accent);border-radius:4px;padding:3px 6px;width:60px;font-family:monospace;font-size:.84rem;text-align:center;}
+.cgrp input[type=number]:focus{outline:none;border-color:var(--accent);}
+.bproc{background:var(--accent);color:#0e0c09;border:none;border-radius:7px;padding:8px 18px;font-family:'Playfair Display',serif;font-size:.9rem;font-weight:700;cursor:pointer;transition:all .2s;}
+.bproc:hover{background:#e8bc6a;transform:translateY(-1px);}
+.bproc:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+/* PROGRESS */
+.progw{display:none;margin:11px 0;}
+.progb{height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.progf{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));border-radius:2px;transition:width .3s;width:0%;}
+.progl{text-align:center;color:var(--muted);font-size:.75rem;margin-top:5px;font-style:italic;}
+
+/* STATUS */
+.stmsg{text-align:center;padding:9px;border-radius:7px;font-size:.83rem;margin:7px 0;display:none;}
+.stmsg.err{background:rgba(180,60,60,.15);border:1px solid rgba(180,60,60,.4);color:var(--bad);}
+.stmsg.inf{background:rgba(212,168,83,.08);border:1px solid var(--border);color:var(--muted);}
+
+/* STATS */
+.stats{display:none;background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:9px 14px;margin-bottom:13px;gap:16px;flex-wrap:wrap;}
+.stat{display:flex;flex-direction:column;gap:2px;}
+.sv{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--accent);line-height:1;}
+.sl{font-size:.67rem;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;}
+.sdot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--ok);margin-right:3px;vertical-align:middle;animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* PAGINATION */
+.pager{display:none;align-items:center;justify-content:center;gap:5px;margin-bottom:10px;flex-wrap:wrap;}
+.pi{color:var(--muted);font-size:.8rem;font-style:italic;min-width:90px;text-align:center;}
+.bpg{background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:5px 11px;font-size:.8rem;cursor:pointer;transition:all .2s;}
+.bpg:hover:not(:disabled){border-color:var(--accent);color:var(--accent);}
+.bpg:disabled{opacity:.3;cursor:not-allowed;}
+.pjump{display:flex;align-items:center;gap:4px;color:var(--muted);font-size:.76rem;}
+.pjump input{background:var(--card);border:1px solid var(--border);color:var(--accent);border-radius:4px;padding:3px 5px;width:46px;font-family:monospace;font-size:.8rem;text-align:center;}
+.pjump input:focus{outline:none;border-color:var(--accent);}
+.bjgo{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:4px;padding:3px 7px;font-size:.73rem;cursor:pointer;transition:all .2s;}
+.bjgo:hover{border-color:var(--accent);color:var(--accent);}
+
+/* PAGE CARD */
+.pcard{background:var(--surface);border:1px solid var(--border);border-radius:11px;overflow:hidden;display:none;}
+
+/* NORMAL TOOLBAR */
+.ptb{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.pnl{font-family:'Playfair Display',serif;font-size:.83rem;color:var(--muted);flex-shrink:0;}
+.pwl{font-size:.7rem;color:var(--dim);font-style:italic;flex-shrink:0;}
+.tsp{flex:1;}
+.fsc{display:flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--border);border-radius:6px;overflow:hidden;flex-shrink:0;}
+.fsc button{background:none;border:none;color:var(--muted);cursor:pointer;padding:4px 9px;font-size:.88rem;font-weight:600;transition:all .2s;line-height:1;}
+.fsc button:hover{background:var(--border);color:var(--accent);}
+.fsc span{font-size:.71rem;color:var(--muted);padding:0 4px;min-width:26px;text-align:center;}
+.bs{background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 10px;font-size:.75rem;cursor:pointer;transition:all .2s;white-space:nowrap;flex-shrink:0;font-family:inherit;}
+.bs:hover{border-color:var(--accent);color:var(--accent);}
+.bs.on{background:var(--accent);color:#0e0c09;border-color:var(--accent);}
+.bs.copied{border-color:var(--ok);color:var(--ok);}
+.bs.busy{opacity:.6;cursor:not-allowed;}
+.bs.tton{background:rgba(212,168,83,.15);border-color:var(--accent);color:var(--accent);}
+
+/* TTS PANEL */
+.ttsp{display:none;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--border);gap:10px;align-items:center;flex-wrap:wrap;}
+.ttsp.show{display:flex;}
+.tc{display:flex;align-items:center;gap:5px;font-size:.77rem;color:var(--muted);}
+.tc label{white-space:nowrap;}
+.tc input[type=range]{-webkit-appearance:none;appearance:none;width:80px;height:3px;border-radius:2px;background:var(--border);outline:none;cursor:pointer;}
+.tc input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);cursor:pointer;}
+.tc input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--accent);cursor:pointer;border:none;}
+.tv{font-family:monospace;font-size:.77rem;color:var(--accent);min-width:30px;}
+.vi{font-size:.7rem;color:var(--dim);font-style:italic;flex:1;}
+.btstop{background:none;border:1px solid var(--border);color:var(--dim);border-radius:4px;padding:3px 7px;font-size:.72rem;cursor:pointer;transition:all .2s;}
+.btstop:hover{border-color:var(--bad);color:var(--bad);}
+
+/* AUTOSCROLL PANEL */
+.asp{display:none;padding:7px 12px;background:var(--card);border-bottom:1px solid var(--border);gap:10px;align-items:center;flex-wrap:wrap;}
+.asp.show{display:flex;}
+.asc{display:flex;align-items:center;gap:5px;font-size:.77rem;color:var(--muted);}
+.asc input[type=range]{-webkit-appearance:none;appearance:none;width:80px;height:3px;border-radius:2px;background:var(--border);outline:none;cursor:pointer;}
+.asc input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--accent);cursor:pointer;}
+.asc input[type=range]::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--accent);cursor:pointer;border:none;}
+.asv{font-family:monospace;font-size:.77rem;color:var(--accent);min-width:18px;}
+.ash{font-size:.7rem;color:var(--dim);font-style:italic;}
+
+/* PAGE TEXT — font-weight 400 for slightly bolder look */
+.ptxt{padding:20px 24px;font-size:1rem;line-height:1.95;color:var(--text);white-space:pre-wrap;font-weight:400;letter-spacing:.015em;min-height:120px;}
+/* sentence highlight — soft warm, left border indicator */
+.ptxt .ck,.hltxt .ck{border-radius:4px;display:inline;transition:background .2s,border-left .2s;padding:1px 2px;}
+.ptxt .ck.thl,.hltxt .ck.thl{
+  background:var(--hl-bg);
+  box-shadow:inset 3px 0 0 var(--accent);
+  border-radius:0 4px 4px 0;
+  padding-left:6px;
+}
+
+/* HINGLISH PANEL */
+.hlp{display:none;border-top:1px solid var(--border);}
+.hlp.show{display:block;}
+.hlhdr{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--card);border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.hllbl{font-size:.77rem;color:var(--muted);font-style:italic;flex:1;}
+.hllbl b{color:var(--accent);font-style:normal;}
+.hltxt{padding:20px 24px;font-size:1rem;line-height:1.95;color:var(--text);white-space:pre-wrap;font-weight:400;letter-spacing:.015em;min-height:60px;position:relative;}
+.hlload{display:none;position:absolute;inset:0;background:var(--surface);align-items:center;justify-content:center;font-size:.83rem;color:var(--muted);font-style:italic;}
+.hlload.show{display:flex;}
+.ld::after{content:'';animation:dots 1.4s infinite;}
+@keyframes dots{0%{content:'';}25%{content:'.';}50%{content:'..';}75%{content:'...';}100%{content:'';}}
+
+/* COPY ALL */
+.call{display:none;justify-content:center;margin-top:13px;}
+.bca{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:7px;padding:7px 20px;font-size:.8rem;cursor:pointer;transition:all .2s;}
+.bca:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ========== FULLSCREEN ========== */
+.pcard.fs{
+  position:fixed;inset:0;z-index:9999;
+  border-radius:0;border:none;
+  display:flex;flex-direction:column;
+  background:var(--bg);
+  overflow:hidden;
+}
+body.fsactive{overflow:hidden;}
+
+/* FS TOPBAR — sticky, always visible */
+.fstopbar{
+  display:none;flex-shrink:0;
+  background:var(--card);
+  border-bottom:1px solid var(--border);
+}
+.pcard.fs .fstopbar{display:block;}
+
+/* top row of FS topbar */
+.fstb-row1{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 16px;flex-wrap:wrap;
+}
+.fstitle{font-family:'Playfair Display',serif;font-size:.88rem;color:var(--accent);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+
+/* FS TTS/AS controls row */
+.fstb-row2{
+  display:flex;align-items:center;gap:8px;
+  padding:6px 16px 10px;flex-wrap:wrap;
+}
+.fsexit{background:var(--bad);color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:.8rem;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;}
+.fsexit:hover{opacity:.85;}
+
+/* FS CONTENT AREA — fills remaining space */
+.fs-body{
+  display:none;flex:1;overflow:hidden;
+  flex-direction:column;
+}
+.pcard.fs .fs-body{display:flex;}
+
+/* In FS, hltxt scrolls inside fs-body */
+.pcard.fs .hltxt{
+  flex:1;overflow-y:auto;
+  padding:28px 40px;
+  scroll-behavior:smooth;
+}
+
+/* FS BOTTOM NAV — sticky at bottom */
+.fsnav{
+  display:none;flex-shrink:0;
+  align-items:center;justify-content:center;gap:8px;
+  padding:10px 16px;background:var(--card);border-top:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.pcard.fs .fsnav{display:flex;}
+
+/* Hide normal toolbar and original text in FS */
+.pcard.fs .ptb{display:none;}
+.pcard.fs .ptxt{display:none;}
+.pcard.fs .ttsp{display:none !important;}
+.pcard.fs .asp{display:none !important;}
+/* FS hinglish panel adjustments */
+.pcard.fs .hlp{display:flex;flex-direction:column;flex:1;overflow:hidden;border-top:none;}
+.pcard.fs .hlp.show{display:flex;}
+.pcard.fs .hlhdr{flex-shrink:0;}
+
+/* Hide copy-all and outer pager in FS */
+body.fsactive .call,body.fsactive .pager{display:none !important;}
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--bg);}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:var(--accent2);}
+
+@media(max-width:500px){
+  .ptxt,.hltxt{padding:14px 12px;}
+  .pcard.fs .hltxt{padding:16px 14px;}
+  .logo{font-size:1.55rem;}
+  .crow{flex-direction:column;align-items:stretch;}
+  .fstb-row1,.fstb-row2,.fsnav{padding-left:12px;padding-right:12px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div>
+    <div class="logo">Book<span>Text</span></div>
+    <div class="tagline">EPUB & PDF to text — Hinglish & Read Aloud</div>
+  </div>
+  <div class="hbtns">
+    <button class="ib" id="btnTheme" title="Dark/Light">&#9790;</button>
+    <button class="ib" id="btnInstIco" style="display:none" title="Install">&#8659;</button>
+  </div>
+</header>
+
+<!-- INSTALL -->
+<div class="ibanner" id="installBanner">
+  <div class="it"><b>Install as App</b>Android pe install karein, offline bhi chalega</div>
+  <button class="binst" id="btnInst">Install</button>
+  <button class="bdis" id="btnDis">&#10005;</button>
+</div>
+
+<!-- API KEY -->
+<div class="apibar">
+  <label>Gemini API Key:</label>
+  <input type="password" id="apiKey" placeholder="AIza..." autocomplete="off">
+  <button class="bsk" id="btnSaveKey">Save</button>
+  <span class="kok" id="keyOk"></span>
+</div>
+
+<!-- SAVED BOOK -->
+<div class="savedbar" id="savedBar">
+  <div class="si"><div class="st" id="savedTitle"></div><div class="ss" id="savedSub"></div></div>
+  <button class="bres" id="btnResume">Resume</button>
+  <button class="bclr" id="btnClrSave">Clear</button>
+</div>
+
+<!-- UPLOAD -->
+<div class="upload" id="uploadZone">
+  <div class="uico">&#128218;</div>
+  <div class="utit">Book yahan drop karein</div>
+  <div class="usub">Click karein ya drag and drop</div>
+  <div class="ufmts"><span class="fmt">EPUB</span><span class="fmt">PDF</span></div>
+  <input type="file" id="fi" accept=".epub,.pdf">
+</div>
+<div class="fsel" id="fsel">
+  <span id="fico">P</span>
+  <span class="fn" id="fn"></span>
+  <span class="fsz2" id="fsz2"></span>
+  <button class="brmv" id="btnRmv">&#10005;</button>
+</div>
+
+<div class="crow" id="crow" style="display:none">
+  <div class="cgrp"><label>Words/page:</label><input type="number" id="wpp" value="750" min="200" max="2000"></div>
+  <button class="bproc" id="btnProc">Convert to Text</button>
+</div>
+
+<div class="progw" id="progw"><div class="progb"><div class="progf" id="progf"></div></div><div class="progl" id="progl">Processing...</div></div>
+<div class="stmsg" id="stmsg"></div>
+
+<!-- STATS -->
+<div class="stats" id="statsEl">
+  <div class="stat"><span class="sv" id="stPg">0</span><span class="sl">Pages</span></div>
+  <div class="stat"><span class="sv" id="stWd">0</span><span class="sl">Words</span></div>
+  <div class="stat"><span class="sv" id="stCh">0</span><span class="sl">Chars</span></div>
+  <div class="stat" id="stSv" style="display:none"><span class="sv" style="font-size:.78rem"><span class="sdot"></span>Saved</span><span class="sl">Auto</span></div>
+</div>
+
+<!-- PAGINATION -->
+<div class="pager" id="pager">
+  <button class="bpg" id="bFirst">&#10216;&#10216;</button>
+  <button class="bpg" id="bPrev">&#10216; Prev</button>
+  <span class="pi" id="pginfo">Page 1 of 1</span>
+  <button class="bpg" id="bNext">Next &#10217;</button>
+  <button class="bpg" id="bLast">&#10217;&#10217;</button>
+  <div class="pjump">Go:<input type="number" id="jIn" min="1"><button class="bjgo" id="bjGo">Go</button></div>
+</div>
+
+<!-- PAGE CARD -->
+<div class="pcard" id="pcard">
+
+  <!-- ===== FULLSCREEN TOPBAR (always visible in FS) ===== -->
+  <div class="fstopbar">
+    <!-- Row 1: title + font + exit -->
+    <div class="fstb-row1">
+      <span class="fstitle" id="fstitle">Hinglish — Page 1</span>
+      <div class="fsc">
+        <button onclick="chgFont(-1)">A&#8722;</button>
+        <span id="fsFontLbl">16</span>
+        <button onclick="chgFont(1)">A+</button>
+      </div>
+      <button class="fsexit" id="btnExitFS">&#10005; Exit</button>
+    </div>
+    <!-- Row 2: TTS controls + auto scroll -->
+    <div class="fstb-row2">
+      <!-- Play/Pause/Stop buttons -->
+      <button class="bs" id="fsBtnPlay">&#9654; Play</button>
+      <button class="bs" id="fsBtnPause" style="display:none">&#9646;&#9646; Pause</button>
+      <button class="bs" id="fsBtnResumeTTS" style="display:none">&#9654; Resume</button>
+      <button class="bs" id="fsBtnStop" style="display:none">&#9632; Stop</button>
+      <!-- Speed -->
+      <div class="tc">
+        <label>Speed:</label>
+        <input type="range" id="fsTspd" min="0.5" max="2" step="0.05" value="0.9">
+        <span class="tv" id="fsTspdv">0.90x</span>
+      </div>
+      <!-- Auto scroll -->
+      <button class="bs" id="fsBtnAS">&#9660; Scroll</button>
+      <div class="asc" id="fsASCtrl" style="display:none">
+        <label>Speed:</label>
+        <input type="range" id="fsAspd" min="1" max="10" step="1" value="3">
+        <span class="asv" id="fsAspdv">3</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Normal toolbar (hidden in FS) -->
+  <div class="ptb">
+    <span class="pnl" id="pnl">Page 1</span>
+    <span class="pwl" id="pwl"></span>
+    <div class="tsp"></div>
+    <div class="fsc">
+      <button onclick="chgFont(-1)">A&#8722;</button>
+      <span id="fontLbl">16</span>
+      <button onclick="chgFont(1)">A+</button>
+    </div>
+    <button class="bs" id="btnCopy">Copy</button>
+    <button class="bs" id="btnHL">Hinglish</button>
+    <button class="bs" id="btnTTS">&#9654; Read</button>
+    <button class="bs" id="btnPause" style="display:none">&#9646;&#9646; Pause</button>
+    <button class="bs" id="btnResumeTTS" style="display:none">&#9654; Resume</button>
+    <button class="bs" id="btnAS">&#9660; Scroll</button>
+    <button class="bs" id="btnFS">Fullscreen</button>
+  </div>
+
+  <!-- TTS panel (normal mode) -->
+  <div class="ttsp" id="ttsp">
+    <div class="tc"><label>Speed:</label><input type="range" id="tspd" min="0.5" max="2" step="0.05" value="0.9"><span class="tv" id="tspdv">0.90x</span></div>
+    <div class="tc"><label>Pitch:</label><input type="range" id="tpit" min="0.5" max="2" step="0.05" value="1.1"><span class="tv" id="tpitv">1.10</span></div>
+    <span class="vi" id="vi">Voice load ho rahi hai...</span>
+    <button class="btstop" id="btnTTSStop">Stop</button>
+  </div>
+
+  <!-- Autoscroll panel (normal mode) -->
+  <div class="asp" id="asp">
+    <div class="asc"><label>Speed:</label><input type="range" id="aspd" min="1" max="10" step="1" value="3"><span class="asv" id="aspdv">3</span></div>
+    <span class="ash">Scroll ho raha hai — dobara click karo rokne ke liye</span>
+  </div>
+
+  <!-- Original text -->
+  <div class="ptxt" id="ptxt"></div>
+
+  <!-- Hinglish panel -->
+  <div class="hlp" id="hlp">
+    <div class="hlhdr">
+      <span class="hllbl"><b>Hinglish</b> — Gemini 2.5 Flash</span>
+      <button class="bs" id="btnCopyHL">Copy</button>
+      <button class="bs" id="btnTTSHL">&#9654; Read</button>
+      <button class="bs" id="btnCloseHL">&#10005;</button>
+    </div>
+    <!-- fs-body wraps hltxt so it fills space in FS -->
+    <div class="fs-body">
+      <div class="hltxt" id="hltxt">
+        <div class="hlload" id="hlload"><span>Gemini se Hinglish bana raha hoon<span class="ld"></span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FS Bottom nav -->
+  <div class="fsnav">
+    <button class="bpg" id="fsBFirst">&#10216;&#10216;</button>
+    <button class="bpg" id="fsBPrev">&#10216; Prev</button>
+    <span class="pi" id="fsPgInfo">Page 1 of 1</span>
+    <button class="bpg" id="fsBNext">Next &#10217;</button>
+    <button class="bpg" id="fsBLast">&#10217;&#10217;</button>
+  </div>
+
+</div><!-- end pcard -->
+
+<div class="call" id="call">
+  <button class="bca" id="btnCA">Copy All Text</button>
+</div>
+
+</div><!-- end wrap -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+'use strict';
+if('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(()=>{});
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const $=id=>document.getElementById(id);
+
+// ===== STATE =====
+let pages=[],hlCache={},curPg=0,bookName='',apiKey='';
+let isTTS=false,ttsPaused=false,ttsChunks=[],ttsIdx=0,ttsIsHL=false,ttsKA=null,ttsU=null;
+let isAS=false,asTimer=null,isFS=false;
+let fontSz=16,selVoice=null;
+
+// ===== THEME =====
+(()=>{const t=localStorage.getItem('bt_theme')||'dark';applyTheme(t);})();
+function applyTheme(t){document.documentElement.setAttribute('data-theme',t);$('btnTheme').innerHTML=t==='dark'?'&#9790;':'&#9728;';localStorage.setItem('bt_theme',t);}
+$('btnTheme').addEventListener('click',()=>applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark'));
+
+// ===== FONT SIZE =====
+function chgFont(d){
+  fontSz=Math.min(28,Math.max(12,fontSz+d));
+  ['ptxt','hltxt'].forEach(id=>{const el=$(id);if(el)el.style.fontSize=fontSz+'px';});
+  ['fontLbl','fsFontLbl'].forEach(id=>{const el=$(id);if(el)el.textContent=fontSz;});
+  localStorage.setItem('bt_fs',fontSz);
+}
+(()=>{
+  const s=parseInt(localStorage.getItem('bt_fs')||'16');
+  fontSz=s;
+  ['ptxt','hltxt'].forEach(id=>{const el=$(id);if(el)el.style.fontSize=s+'px';});
+  ['fontLbl','fsFontLbl'].forEach(id=>{const el=$(id);if(el)el.textContent=s;});
+})();
+
+// ===== API KEY =====
+(()=>{const k=localStorage.getItem('bt_gkey')||'';apiKey=k;if(k){$('apiKey').value=k;$('keyOk').textContent='Key saved';}})();
+$('btnSaveKey').addEventListener('click',()=>{
+  const k=$('apiKey').value.trim();
+  if(!k){$('keyOk').style.color='var(--bad)';$('keyOk').textContent='Key daalo pehle';return;}
+  apiKey=k;localStorage.setItem('bt_gkey',k);
+  $('keyOk').style.color='var(--ok)';$('keyOk').textContent='Saved!';
+  setTimeout(()=>$('keyOk').textContent='Key saved',2000);
+});
+
+// ===== PWA =====
+let dip=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();dip=e;$('installBanner').style.display='flex';$('btnInstIco').style.display='flex';});
+$('btnInst').addEventListener('click',()=>{if(!dip)return;dip.prompt();dip.userChoice.then(()=>{dip=null;$('installBanner').style.display='none';$('btnInstIco').style.display='none';});});
+$('btnDis').addEventListener('click',()=>$('installBanner').style.display='none');
+$('btnInstIco').addEventListener('click',()=>{if(dip)dip.prompt();});
+
+// ===== IndexedDB =====
+const DB='BookTextDB',DV=1,ST='books';
+const openDB=()=>new Promise((r,j)=>{const q=indexedDB.open(DB,DV);q.onupgradeneeded=e=>{const d=e.target.result;if(!d.objectStoreNames.contains(ST))d.createObjectStore(ST,{keyPath:'id'});};q.onsuccess=e=>r(e.target.result);q.onerror=()=>j(q.error);});
+const saveBook=async d=>{const db=await openDB();return new Promise((r,j)=>{const tx=db.transaction(ST,'readwrite');tx.objectStore(ST).put({id:'current',...d});tx.oncomplete=r;tx.onerror=()=>j(tx.error);});};
+const loadBook=async()=>{const db=await openDB();return new Promise((r,j)=>{const tx=db.transaction(ST,'readonly');const q=tx.objectStore(ST).get('current');q.onsuccess=()=>r(q.result||null);q.onerror=()=>j(q.error);});};
+const clearBook=async()=>{const db=await openDB();return new Promise((r,j)=>{const tx=db.transaction(ST,'readwrite');tx.objectStore(ST).delete('current');tx.oncomplete=r;tx.onerror=()=>j(tx.error);});};
+
+// ===== ON LOAD =====
+window.addEventListener('load',async()=>{
+  try{const s=await loadBook();if(s&&s.pages&&s.pages.length){$('savedTitle').textContent=s.bookName||'Saved Book';$('savedSub').textContent=s.pages.length+' pages — last: Page '+((s.curPg||0)+1);$('savedBar').style.display='flex';}}catch(e){}
+  initVoices();
+});
+$('btnResume').addEventListener('click',async()=>{
+  try{
+    const s=await loadBook();if(!s)return;
+    pages=s.pages;bookName=s.bookName;curPg=s.curPg||0;hlCache=s.hlCache||{};
+    $('wpp').value=s.wpp||750;$('savedBar').style.display='none';
+    showStats(pages.reduce((a,p)=>a+wc(p),0),s.tc||0);
+    renderPage(curPg);showReader();
+  }catch(e){showSt('Resume nahi ho saka: '+e.message,'err');}
+});
+$('btnClrSave').addEventListener('click',async()=>{await clearBook();$('savedBar').style.display='none';hlCache={};});
+
+// ===== UPLOAD =====
+const uz=$('uploadZone'),fi=$('fi');
+uz.addEventListener('click',()=>fi.click());
+fi.addEventListener('change',e=>{if(e.target.files[0])handleFile(e.target.files[0]);});
+uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('dv');});
+uz.addEventListener('dragleave',()=>uz.classList.remove('dv'));
+uz.addEventListener('drop',e=>{e.preventDefault();uz.classList.remove('dv');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
+$('btnRmv').addEventListener('click',()=>{selFile=null;fi.value='';$('fsel').style.display='none';$('crow').style.display='none';hideReader();hideSt();});
+
+let selFile=null;
+function handleFile(f){
+  const ext=f.name.split('.').pop().toLowerCase();
+  if(!['epub','pdf'].includes(ext)){showSt('Sirf EPUB aur PDF supported hain.','err');return;}
+  selFile=f;bookName=f.name;
+  $('fico').textContent=ext==='epub'?'E':'P';
+  $('fn').textContent=f.name;$('fsz2').textContent=fmtB(f.size);
+  $('fsel').style.display='flex';$('crow').style.display='flex';
+  hideReader();hideSt();
+}
+function fmtB(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB';}
+function wc(t){return t.split(/\s+/).filter(w=>w.length>0).length;}
+function hideReader(){$('statsEl').style.display='none';$('pager').style.display='none';$('pcard').style.display='none';$('call').style.display='none';pages=[];curPg=0;hlCache={};stopAS();stopTTS();}
+function showReader(){$('pager').style.display='flex';$('pcard').style.display='block';$('call').style.display='flex';$('jIn').max=pages.length;}
+function showSt(msg,type){$('stmsg').textContent=msg;$('stmsg').className='stmsg '+type;$('stmsg').style.display='block';}
+function hideSt(){$('stmsg').style.display='none';}
+function setProg(p,l){$('progw').style.display='block';$('progf').style.width=p+'%';$('progl').textContent=l;}
+function showStats(tw,tc){$('stPg').textContent=pages.length.toLocaleString();$('stWd').textContent=tw.toLocaleString();$('stCh').textContent=tc.toLocaleString();$('stSv').style.display='flex';$('statsEl').style.display='flex';}
+
+// ===== PROCESS =====
+$('btnProc').addEventListener('click',async()=>{
+  if(!selFile)return;
+  const wpp=parseInt($('wpp').value)||750;
+  $('btnProc').disabled=true;hideReader();hideSt();setProg(5,'File padh raha hoon...');
+  try{
+    let txt='';
+    const ext=selFile.name.split('.').pop().toLowerCase();
+    if(ext==='epub')txt=await extractEpub(selFile);
+    else txt=await extractPdf(selFile);
+    setProg(90,'Pages bana raha hoon...');
+    pages=paginate(txt,wpp);hlCache={};
+    if(!pages.length){showSt('Koi text nahi mila.','err');$('btnProc').disabled=false;$('progw').style.display='none';return;}
+    setProg(95,'Save kar raha hoon...');
+    try{await saveBook({bookName,pages,curPg:0,wpp,tc:txt.length,hlCache:{},savedAt:Date.now()});}catch(e){}
+    setProg(100,'Ho gaya!');setTimeout(()=>$('progw').style.display='none',500);
+    showStats(pages.reduce((a,p)=>a+wc(p),0),txt.length);
+    curPg=0;renderPage(0);showReader();$('savedBar').style.display='none';
+  }catch(err){showSt('Error: '+err.message,'err');$('progw').style.display='none';console.error(err);}
+  $('btnProc').disabled=false;
+});
+
+// ===== EPUB =====
+async function extractEpub(f){
+  const ab=await f.arrayBuffer(),zip=await JSZip.loadAsync(ab);
+  const cx=await zip.file('META-INF/container.xml').async('text');
+  const op=cx.match(/full-path="([^"]+\.opf)"/)?.[1];
+  if(!op)throw new Error('OPF nahi mila');
+  const oc=await zip.file(op).async('text'),od=op.includes('/')?op.substring(0,op.lastIndexOf('/')+1):'';
+  const opDoc=new DOMParser().parseFromString(oc,'application/xml');
+  const mm={};opDoc.querySelectorAll('manifest item').forEach(i=>mm[i.getAttribute('id')]=i.getAttribute('href'));
+  const si=[];opDoc.querySelectorAll('spine itemref').forEach(r=>{const id=r.getAttribute('idref');if(mm[id])si.push(mm[id]);});
+  if(!si.length)Object.values(mm).forEach(h=>{if(/\.x?html?$/i.test(h))si.push(h);});
+  let txt='';
+  for(let i=0;i<si.length;i++){
+    setProg(10+Math.floor(70*i/si.length),'Chapter '+(i+1)+'/'+si.length+'...');
+    const zf=zip.file(od+si[i])||zip.file(si[i]);if(!zf)continue;
+    const t=h2t(await zf.async('text'));if(t.trim())txt+=t+'\n\n';
+  }
+  return txt;
+}
+function h2t(html){const d=new DOMParser().parseFromString(html,'text/html');d.querySelectorAll('script,style,nav').forEach(e=>e.remove());return d.body?(d.body.innerText||d.body.textContent):'';}
+
+// ===== PDF =====
+async function extractPdf(f){
+  const ab=await f.arrayBuffer(),pdf=await pdfjsLib.getDocument({data:ab}).promise;
+  const tot=pdf.numPages;let txt='';
+  for(let i=1;i<=tot;i++){
+    setProg(10+Math.floor(75*i/tot),'PDF page '+i+'/'+tot+'...');
+    const p=await pdf.getPage(i),c=await p.getTextContent();
+    txt+=c.items.map(x=>x.str).join(' ')+'\n';
+  }
+  return txt;
+}
+
+// ===== PAGINATE =====
+function paginate(txt,wpp){
+  txt=txt.replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/\n{3,}/g,'\n\n').replace(/[ \t]{2,}/g,' ').trim();
+  const ws=txt.split(/\s+/).filter(w=>w.length>0),res=[];
+  for(let i=0;i<ws.length;i+=wpp)res.push(ws.slice(i,i+wpp).join(' '));
+  return res;
+}
+
+// ===== RENDER PAGE =====
+function renderPage(idx){
+  if(idx<0||idx>=pages.length)return;
+  stopTTS();stopAS();curPg=idx;
+  buildSpans($('ptxt'),pages[idx]);
+  $('pnl').textContent='Page '+(idx+1)+' of '+pages.length;
+  $('pwl').textContent=wc(pages[idx]).toLocaleString()+' words';
+  ['pginfo','fsPgInfo'].forEach(id=>$(id).textContent='Page '+(idx+1)+' of '+pages.length);
+  $('fstitle').textContent='Hinglish — Page '+(idx+1)+' of '+pages.length;
+  $('jIn').value=idx+1;
+  ['bFirst','fsBFirst'].forEach(b=>$(b).disabled=idx===0);
+  ['bPrev','fsBPrev'].forEach(b=>$(b).disabled=idx===0);
+  ['bNext','fsBNext'].forEach(b=>$(b).disabled=idx===pages.length-1);
+  ['bLast','fsBLast'].forEach(b=>$(b).disabled=idx===pages.length-1);
+  $('btnCopy').classList.remove('copied');$('btnCopy').textContent='Copy';
+
+  if(hlCache[idx]){buildSpans($('hltxt'),hlCache[idx]);removeHLLoad();$('hlp').classList.add('show');$('btnHL').classList.add('on');}
+  else{clearHLText();$('hlp').classList.remove('show');$('btnHL').classList.remove('on');}
+
+  if(isFS){$('hlp').classList.add('show');if(!hlCache[idx])triggerHinglish();}
+  savePg(idx);
+}
+
+// Build sentence spans
+function buildSpans(container,text){
+  container.innerHTML='';
+  const parts=text.match(/[^.!?\n]+[.!?\n]+|[^.!?\n]+$/g)||[text];
+  parts.forEach((s,i)=>{
+    const sp=document.createElement('span');
+    sp.className='ck';sp.textContent=s;sp.dataset.ci=i;
+    container.appendChild(sp);
+  });
+  container.style.fontSize=fontSz+'px';
+}
+function clearHLText(){Array.from($('hltxt').childNodes).forEach(n=>{if(n!==$('hlload'))n.remove();});$('hlload').classList.remove('show');}
+function removeHLLoad(){$('hlload').classList.remove('show');}
+function getSpans(c){return Array.from(c.querySelectorAll('.ck'));}
+
+// Highlight sentence AND scroll it to CENTER of its container
+function highlightSpan(container,idx){
+  const spans=getSpans(container);
+  spans.forEach((s,i)=>s.classList.toggle('thl',i===idx));
+  const sp=spans[idx];
+  if(!sp)return;
+  // Scroll highlighted sentence to vertical center of scroll container
+  const scrollParent=isFS?$('hltxt'):(container.closest('.pcard')||container);
+  const spTop=sp.offsetTop;
+  const spH=sp.offsetHeight;
+  const parentH=scrollParent.clientHeight;
+  const target=spTop-(parentH/2)+(spH/2);
+  scrollParent.scrollTo({top:Math.max(0,target),behavior:'smooth'});
+}
+function clearHL(container){getSpans(container).forEach(s=>s.classList.remove('thl'));}
+
+async function savePg(idx){try{const s=await loadBook();if(s){s.curPg=idx;s.hlCache=hlCache;await saveBook(s);}}catch(e){}}
+
+// ===== NAVIGATION =====
+$('bFirst').addEventListener('click',()=>renderPage(0));
+$('bPrev').addEventListener('click',()=>renderPage(curPg-1));
+$('bNext').addEventListener('click',()=>renderPage(curPg+1));
+$('bLast').addEventListener('click',()=>renderPage(pages.length-1));
+$('bjGo').addEventListener('click',()=>{const v=parseInt($('jIn').value)-1;if(!isNaN(v)&&v>=0&&v<pages.length)renderPage(v);});
+$('jIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('bjGo').click();});
+$('fsBFirst').addEventListener('click',()=>renderPage(0));
+$('fsBPrev').addEventListener('click',()=>renderPage(curPg-1));
+$('fsBNext').addEventListener('click',()=>renderPage(curPg+1));
+$('fsBLast').addEventListener('click',()=>renderPage(pages.length-1));
+
+// ===== COPY =====
+function doCopy(txt,btn,ok,orig){
+  const ok2=()=>{btn.classList.add('copied');btn.textContent=ok;setTimeout(()=>{btn.classList.remove('copied');btn.textContent=orig;},2000);};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(ok2).catch(()=>fbCopy(txt,ok2));}else fbCopy(txt,ok2);
+}
+function fbCopy(txt,ok2){const ta=document.createElement('textarea');ta.value=txt;ta.style.cssText='position:fixed;top:0;left:0;opacity:0;pointer-events:none;';document.body.appendChild(ta);ta.focus();ta.select();try{document.execCommand('copy');ok2();}catch(e){alert('Ctrl+C se copy karein');}document.body.removeChild(ta);}
+$('btnCopy').addEventListener('click',()=>{if(!pages.length)return;doCopy(pages[curPg],$('btnCopy'),'Copied!','Copy');});
+$('btnCA').addEventListener('click',()=>{if(!pages.length)return;doCopy(pages.join('\n\n---\n\n'),$('btnCA'),'Copied!','Copy All Text');});
+$('btnCopyHL').addEventListener('click',()=>{const t=hlCache[curPg]||'';if(!t)return;doCopy(t,$('btnCopyHL'),'Copied!','Copy');});
+
+// ===== GEMINI =====
+async function callGemini(text){
+  if(!apiKey)throw new Error('Gemini API key nahi daali — upar save karo pehle');
+  const prompt=`Tum ek expert Hinglish translator ho. Neeche diya gaya poora English text hai. Isko natural bol-chal wali Hinglish mein translate karo — woh Hindi-English mix jo hum roz bolte hain, jaise koi dost samjha raha ho.
+
+Rules:
+- Koi emoji ya symbol nahi
+- Koi heading, bullet point, star ya formatting nahi — sirf flowing paragraph text
+- Technical terms, proper nouns aur book titles English mein hi rehne do
+- Formal ya bookish Hindi avoid karo, roz ki aam boli use karo
+- Sirf translation do, koi extra introduction mat lagana
+- Poora text translate karo, kuch bhi mat chhodna
+
+Text:
+${text}`;
+  const res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{temperature:0.3,maxOutputTokens:8192}})
+  });
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(e?.error?.message||'API error '+res.status);}
+  const d=await res.json();
+  return(d?.candidates?.[0]?.content?.parts?.[0]?.text||'').replace(/\*\*/g,'').replace(/^\s*[-*#]\s/gm,'').trim();
+}
+
+async function triggerHinglish(){
+  if(hlCache[curPg]){buildSpans($('hltxt'),hlCache[curPg]);removeHLLoad();$('hlp').classList.add('show');$('btnHL').classList.add('on');return;}
+  $('hlp').classList.add('show');$('btnHL').classList.add('on');clearHLText();$('hlload').classList.add('show');$('btnHL').classList.add('busy');
+  try{
+    const t=await callGemini(pages[curPg]);
+    hlCache[curPg]=t;buildSpans($('hltxt'),t);removeHLLoad();
+    try{const s=await loadBook();if(s){s.hlCache=hlCache;await saveBook(s);}}catch(e){}
+  }catch(err){
+    $('hlload').classList.remove('show');clearHLText();
+    const e=document.createElement('span');e.textContent='Error: '+err.message;$('hltxt').appendChild(e);
+    if(!isFS){$('hlp').classList.remove('show');$('btnHL').classList.remove('on');}
+    showSt(err.message,'err');
+  }
+  $('btnHL').classList.remove('busy');
+}
+
+$('btnHL').addEventListener('click',async()=>{
+  if(!pages.length)return;
+  if($('hlp').classList.contains('show')&&hlCache[curPg]&&!isFS){$('hlp').classList.remove('show');$('btnHL').classList.remove('on');return;}
+  await triggerHinglish();
+});
+$('btnCloseHL').addEventListener('click',()=>{if(isFS)return;$('hlp').classList.remove('show');$('btnHL').classList.remove('on');});
+
+// ===== TTS VOICES =====
+function initVoices(){
+  function load(){const vs=window.speechSynthesis.getVoices();if(!vs.length)return;selVoice=pickVoice(vs);$('vi').textContent=selVoice?'Voice: '+selVoice.name:'Hindi voice nahi mili, default use hogi';}
+  load();window.speechSynthesis.onvoiceschanged=load;setTimeout(load,500);setTimeout(load,1500);
+}
+function pickVoice(vs){
+  const fem=['female','woman','girl','latha','priya','aditi','divya','swara','veena'];
+  const hi=vs.filter(v=>v.lang&&v.lang.toLowerCase().startsWith('hi'));
+  const hn=vs.filter(v=>v.name&&v.name.toLowerCase().includes('hindi'));
+  for(const v of hi){if(fem.some(k=>v.name.toLowerCase().includes(k)))return v;}
+  if(hi.length)return hi[0];
+  for(const v of hn){if(fem.some(k=>v.name.toLowerCase().includes(k)))return v;}
+  if(hn.length)return hn[0];
+  for(const v of vs){if(fem.some(k=>v.name.toLowerCase().includes(k)))return v;}
+  return null;
+}
+
+// ===== TTS CORE =====
+function getSpkRate(){return parseFloat(isFS?$('fsTspd').value:$('tspd').value);}
+function getSpkPitch(){return parseFloat($('tpit').value);}
+function getChunks(c){return getSpans(c).map(s=>s.textContent).filter(t=>t.trim().length>0);}
+
+// Single speak call — no cancel() before speak, that breaks Chrome
+function doSpeak(text,onDone,onErr){
+  const u=new SpeechSynthesisUtterance(text);
+  u.rate=getSpkRate();u.pitch=getSpkPitch();u.lang='hi-IN';
+  if(selVoice)u.voice=selVoice;
+  u.onend=onDone;
+  u.onerror=e=>{
+    // interrupted/canceled = we stopped it ourselves, ignore
+    if(e.error==='interrupted'||e.error==='canceled')return;
+    onErr(e);
+  };
+  ttsU=u;
+  window.speechSynthesis.speak(u);
+}
+
+function speakChunk(idx){
+  if(!isTTS||ttsPaused||idx>=ttsChunks.length){
+    if(!ttsPaused)ttsFinished();
+    return;
+  }
+  ttsIdx=idx;
+  highlightSpan(ttsIsHL?$('hltxt'):$('ptxt'),idx);
+  doSpeak(
+    ttsChunks[idx].trim(),
+    ()=>{ if(isTTS&&!ttsPaused) speakChunk(idx+1); },
+    ()=>{ if(isTTS&&!ttsPaused) speakChunk(idx+1); }
+  );
+}
+
+// Chrome bug: speechSynthesis stops after ~15s silently — keep it alive
+function startKA(){
+  stopKA();
+  ttsKA=setInterval(()=>{
+    if(!isTTS){stopKA();return;}
+    // Chrome needs this nudge
+    if(window.speechSynthesis.paused&&!ttsPaused) window.speechSynthesis.resume();
+    // If not speaking and not paused but we think we are — restart chunk
+    if(!window.speechSynthesis.speaking&&!window.speechSynthesis.pending&&!ttsPaused&&isTTS){
+      speakChunk(ttsIdx);
+    }
+  },3000);
+}
+function stopKA(){if(ttsKA){clearInterval(ttsKA);ttsKA=null;}}
+
+function ttsFinished(){
+  isTTS=false;ttsPaused=false;
+  clearHL($('ptxt'));clearHL($('hltxt'));
+  stopKA();updateTTSBtns();
+}
+
+function updateTTSBtns(){
+  const playing=isTTS&&!ttsPaused,paused=isTTS&&ttsPaused;
+  $('btnTTS').style.display=!isTTS?'':'none';
+  $('btnPause').style.display=playing?'':'none';
+  $('btnResumeTTS').style.display=paused?'':'none';
+  $('fsBtnPlay').style.display=!isTTS?'':'none';
+  $('fsBtnPause').style.display=playing?'':'none';
+  $('fsBtnResumeTTS').style.display=paused?'':'none';
+  $('fsBtnStop').style.display=isTTS?'':'none';
+  $('btnTTSHL').innerHTML=isTTS?'Stop':'&#9654; Read';
+}
+
+function startTTS(container,isHL){
+  stopTTS();
+  if(!window.speechSynthesis){showSt('Browser mein TTS support nahi hai.','err');return;}
+  ttsChunks=getChunks(container);
+  if(!ttsChunks.length){showSt('Text nahi mila.','err');return;}
+  ttsIdx=0;ttsIsHL=isHL;isTTS=true;ttsPaused=false;
+  $('ttsp').classList.add('show');
+  updateTTSBtns();
+  // Cancel any leftover speech first, then wait, then start
+  window.speechSynthesis.cancel();
+  setTimeout(()=>{if(isTTS&&!ttsPaused){startKA();speakChunk(0);}},200);
+}
+
+function pauseTTS(){
+  if(!isTTS||ttsPaused)return;
+  window.speechSynthesis.pause();
+  ttsPaused=true;stopKA();updateTTSBtns();
+}
+
+function resumeTTS(){
+  if(!isTTS||!ttsPaused)return;
+  ttsPaused=false;updateTTSBtns();
+  window.speechSynthesis.resume();
+  // Some browsers don't resume properly — re-speak chunk after short wait
+  setTimeout(()=>{
+    if(isTTS&&!ttsPaused&&!window.speechSynthesis.speaking)speakChunk(ttsIdx);
+  },400);
+  startKA();
+}
+
+function stopTTS(){
+  isTTS=false;ttsPaused=false;
+  window.speechSynthesis&&window.speechSynthesis.cancel();
+  ttsChunks=[];ttsIdx=0;
+  clearHL($('ptxt'));clearHL($('hltxt'));
+  stopKA();$('ttsp').classList.remove('show');
+  updateTTSBtns();
+}
+
+// Normal mode buttons
+$('btnTTS').addEventListener('click',()=>{if(!pages.length)return;startTTS($('ptxt'),false);});
+$('btnPause').addEventListener('click',pauseTTS);
+$('btnResumeTTS').addEventListener('click',resumeTTS);
+$('btnTTSHL').addEventListener('click',()=>{
+  if(isTTS){stopTTS();return;}
+  if(!hlCache[curPg]){showSt('Pehle Hinglish translation karo.','inf');return;}
+  startTTS($('hltxt'),true);
+});
+$('btnTTSStop').addEventListener('click',stopTTS);
+
+// FS mode buttons
+$('fsBtnPlay').addEventListener('click',async()=>{
+  if(!hlCache[curPg]){await triggerHinglish();}
+  if(hlCache[curPg])startTTS($('hltxt'),true);
+});
+$('fsBtnPause').addEventListener('click',pauseTTS);
+$('fsBtnResumeTTS').addEventListener('click',resumeTTS);
+$('fsBtnStop').addEventListener('click',stopTTS);
+
+// Speed/pitch sync between normal and FS
+$('tspd').addEventListener('input',()=>{$('tspdv').textContent=parseFloat($('tspd').value).toFixed(2)+'x';$('fsTspd').value=$('tspd').value;$('fsTspdv').textContent=$('tspdv').textContent;});
+$('tpit').addEventListener('input',()=>$('tpitv').textContent=parseFloat($('tpit').value).toFixed(2));
+$('fsTspd').addEventListener('input',()=>{$('fsTspdv').textContent=parseFloat($('fsTspd').value).toFixed(2)+'x';$('tspd').value=$('fsTspd').value;$('tspdv').textContent=$('fsTspdv').textContent;});
+
+// ===== AUTO SCROLL =====
+function getASSpeed(){return parseInt((isFS?$('fsAspd'):$('aspd')).value)*0.4;}
+function startAS(){
+  isAS=true;
+  $('btnAS').classList.add('on');$('fsBtnAS').classList.add('on');
+  if(isFS){$('fsASCtrl').style.display='flex';}else{$('asp').classList.add('show');}
+  asTimer=setInterval(()=>{
+    const spd=getASSpeed();
+    if(isFS)$('hltxt').scrollTop+=spd;else window.scrollBy(0,spd);
+  },16);
+}
+function stopAS(){
+  if(asTimer){clearInterval(asTimer);asTimer=null;}
+  isAS=false;
+  $('btnAS').classList.remove('on');$('fsBtnAS').classList.remove('on');
+  $('asp').classList.remove('show');$('fsASCtrl').style.display='none';
+}
+$('btnAS').addEventListener('click',()=>isAS?stopAS():startAS());
+$('fsBtnAS').addEventListener('click',()=>isAS?stopAS():startAS());
+$('aspd').addEventListener('input',()=>{$('aspdv').textContent=$('aspd').value;$('fsAspd').value=$('aspd').value;$('fsAspdv').textContent=$('aspd').value;if(isAS){stopAS();startAS();}});
+$('fsAspd').addEventListener('input',()=>{$('fsAspdv').textContent=$('fsAspd').value;$('aspd').value=$('fsAspd').value;$('aspdv').textContent=$('fsAspd').value;if(isAS){stopAS();startAS();}});
+
+// ===== FULLSCREEN =====
+$('btnFS').addEventListener('click',()=>isFS?exitFS():enterFS());
+$('btnExitFS').addEventListener('click',exitFS);
+
+function enterFS(){
+  isFS=true;
+  $('pcard').classList.add('fs');document.body.classList.add('fsactive');
+  $('btnFS').textContent='Exit Full';
+  $('hlp').classList.add('show');$('btnHL').classList.add('on');
+  if(!hlCache[curPg])triggerHinglish();
+  updateTTSBtns();
+  const el=$('pcard');
+  (el.requestFullscreen||el.webkitRequestFullscreen||el.mozRequestFullScreen||el.msRequestFullscreen||function(){}).call(el);
+}
+
+function exitFS(){
+  isFS=false;
+  $('pcard').classList.remove('fs');document.body.classList.remove('fsactive');
+  $('btnFS').textContent='Fullscreen';
+  stopAS();updateTTSBtns();
+  if(!hlCache[curPg]){$('hlp').classList.remove('show');$('btnHL').classList.remove('on');}
+  const ef=document.exitFullscreen||document.webkitExitFullscreen||document.mozCancelFullScreen||document.msExitFullscreen;
+  if(ef&&document.fullscreenElement)ef.call(document).catch(()=>{});
+}
+
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&isFS)exitFS();});
+document.addEventListener('webkitfullscreenchange',()=>{if(!document.webkitFullscreenElement&&isFS)exitFS();});
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&isFS)exitFS();
+  if(e.key===' '&&isTTS){e.preventDefault();ttsPaused?resumeTTS():pauseTTS();}
+});
+</script>
+</body>
+</html>

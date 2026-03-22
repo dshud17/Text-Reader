@@ -1,0 +1,25 @@
+{
+  "name": "BookText — EPUB & PDF Reader",
+  "short_name": "BookText",
+  "description": "EPUB aur PDF ko clean paginated text mein convert karo",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0e0c09",
+  "theme_color": "#d4a853",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["books", "utilities", "education"]
+}
